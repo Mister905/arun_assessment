@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 
 function App() {
+
   let [pokemon_list, set_pokemon_list] = useState([]);
 
-  let [is_disable_previous, set_is_disable_previous] = useState(true);
-
-  let [is_disable_next, set_is_disable_next] = useState(false);
+  let [is_initial_load, set_is_initial_load] = useState(false);
 
   const fetch_api = async () => {
+
     let response = await fetch(`https://pokeapi.co/api/v2/pokemon`);
 
     let data = response.json();
@@ -16,6 +16,7 @@ function App() {
   };
 
   const fetch_pokemon_stats = async (pokemon_url) => {
+
     let response = await fetch(`${pokemon_url}`);
 
     let data = response.json();
@@ -24,6 +25,7 @@ function App() {
   };
 
   useEffect(async () => {
+
     let res = await fetch_api();
 
     let pokemon_object_array = [];
@@ -37,41 +39,49 @@ function App() {
     }
 
     set_pokemon_list(pokemon_object_array);
+
+    set_is_initial_load(true);
+
   }, []);
 
   useEffect(async () => {
+
     let updated_pokemon_object_array = [];
 
     for (let i = 0; i < pokemon_list.length; i++) {
+
       let res = await fetch_pokemon_stats(pokemon_list[i].url);
 
       updated_pokemon_object_array.push({
         id: res.id,
-        url: res.sprites.front_default,
+        sprite_url: res.sprites.front_default,
       });
     }
 
     let updated_pokemon_list = pokemon_list.map((pokemon, i) => {
+      
       pokemon.id = updated_pokemon_object_array[i].id;
 
-      pokemon.url = updated_pokemon_object_array[i].url;
+      pokemon.sprite_url = updated_pokemon_object_array[i].sprite_url;
 
       return pokemon;
     });
 
     set_pokemon_list(updated_pokemon_list);
-  }, []);
+
+  }, [is_initial_load]);
 
   const get_prev_set = async () => {
-    if (pokemon_list[0].previous) {
-      let response = await fetch(`${pokemon_list[0].previous}`);
 
-      let data = await response.json();
+    if (pokemon_list[0].previous) {
+
+      let res = await fetch(`${pokemon_list[0].previous}`);
+
+      let data = await res.json();
 
       let pokemon_object_array = [];
 
       for (let i = 0; i <= 2; i++) {
-        console.log(data.previous);
 
         data.results[i].previous = data.previous;
 
@@ -80,19 +90,38 @@ function App() {
         pokemon_object_array.push(data.results[i]);
       }
 
-      set_pokemon_list(pokemon_object_array);
+      let updated_pokemon_object_array = [];
+
+      for (let i = 0; i < pokemon_list.length; i++) {
+
+        let res = await fetch_pokemon_stats(pokemon_object_array[i].url);
+
+        updated_pokemon_object_array.push({
+          id: res.id,
+          sprite_url: res.sprites.front_default,
+          name: pokemon_object_array[i].name,
+          next: pokemon_object_array[i].next,
+          previous: pokemon_object_array[i].previous,
+          url: pokemon_object_array[i].url,
+        });
+      }
+
+      set_pokemon_list(updated_pokemon_object_array);
     }
   };
 
   const get_next_set = async () => {
-    if (pokemon_list[0].next) {
-      let response = await fetch(`${pokemon_list[0].next}`);
 
-      let data = await response.json();
+    if (pokemon_list[0].next) {
+
+      let res = await fetch(`${pokemon_list[0].next}`);
+
+      let data = await res.json();
 
       let pokemon_object_array = [];
 
       for (let i = 0; i <= 2; i++) {
+
         data.results[i].previous = data.previous;
 
         data.results[i].next = data.next;
@@ -100,7 +129,23 @@ function App() {
         pokemon_object_array.push(data.results[i]);
       }
 
-      set_pokemon_list(pokemon_object_array);
+      let updated_pokemon_object_array = [];
+
+      for (let i = 0; i < pokemon_list.length; i++) {
+
+        let res = await fetch_pokemon_stats(pokemon_object_array[i].url);
+
+        updated_pokemon_object_array.push({
+          id: res.id,
+          sprite_url: res.sprites.front_default,
+          name: pokemon_object_array[i].name,
+          next: pokemon_object_array[i].next,
+          previous: pokemon_object_array[i].previous,
+          url: pokemon_object_array[i].url,
+        });
+      }
+
+      set_pokemon_list(updated_pokemon_object_array);
     }
   };
 
@@ -110,16 +155,15 @@ function App() {
         onClick={async () => {
           await get_prev_set();
         }}
-        // disabled={is_disable_previous}
+        disabled={pokemon_list[0] && pokemon_list[0].previous ? "" : true}
       >
         Previous
       </button>
       {pokemon_list.map((pokemon) => {
         return (
           <div key={pokemon.url}>
-            <div>{pokemon.name}</div>
-
-            <img src={pokemon.url} alt="" />
+            <div>{`${pokemon.name} - Id: ${pokemon.id}`}</div>
+            <img src={pokemon.sprite_url} alt="" />
           </div>
         );
       })}
@@ -127,7 +171,7 @@ function App() {
         onClick={async () => {
           await get_next_set();
         }}
-        // disabled={is_disable_next}
+        disabled={pokemon_list[0] && pokemon_list[0].next ? "" : true}
       >
         Next
       </button>
