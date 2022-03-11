@@ -8,7 +8,7 @@ function App() {
 
   const fetch_api = async () => {
 
-    let response = await fetch(`https://pokeapi.co/api/v2/pokemon`);
+    let response = await fetch(`https://pokeapi.co/api/v2/pokemon?offset=0&limit=3`);
 
     let data = response.json();
 
@@ -30,7 +30,10 @@ function App() {
 
     let pokemon_object_array = [];
 
+    console.log(res);
+
     for (let i = 0; i <= 2; i++) {
+
       res.results[i].previous = res.previous;
 
       res.results[i].next = res.next;
@@ -59,7 +62,7 @@ function App() {
     }
 
     let updated_pokemon_list = pokemon_list.map((pokemon, i) => {
-      
+
       pokemon.id = updated_pokemon_object_array[i].id;
 
       pokemon.sprite_url = updated_pokemon_object_array[i].sprite_url;
